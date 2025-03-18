@@ -1,0 +1,138 @@
+
+                                __      ____  __ 
+     /\                         \ \    / /  \/  |
+    /  \    _____   _ _ __ ___   \ \  / /| \  / |
+   / /\ \  |_  / | | | '__/ _ \   \ \/ / | |\/| |
+  / ____ \  / /| |_| | | |  __/    \  /  | |  | |
+ /_/  __\_\/___|\__,_|_|  \___|     \/   |_|  |_|
+ |  \/  |                                        
+ | \  / | __ _ _ __   __ _  __ _  ___ _ __       
+ | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|      
+ | |  | | (_| | | | | (_| | (_| |  __/ |         
+ |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|         
+                            __/ |                
+                           |___/  
+
+#Cet outil permet l'ajout, la suppresion, et l'interaction avec des VM via Azure
+
+
+#prerequis : 
+#compte Azure actif
+#Azure CLI installé sur votre machine
+#Une authentification réussie avec az login
+#Un groupe de ressources déjà existant pour héberger les VMs
+#Identifier l'image de VM souhaitée pour installation : az vm image list --offer Debian --all --output table
+
+#!/usr/bin/env python3
+import os
+import sys
+import time
+from colorama import init, Fore, Back, Style
+
+def typewriter(text, delay=0.05):
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(delay)
+    print()
+def creer_vm():
+    print("\n=== Création d'une nouvelle machine virtuelle ===")
+    vm_name = input("Nom de la VM : ")
+    resource_group = input("Nom du groupe de ressources : ")
+    image = input("Image (ex. UbuntuLTS, Win2019Datacenter) : ")
+    size = input("Taille de la VM (ex. Standard_DS1_v2) : ")
+    ssh = input("Générer des clés SSH : --generate-ssh-keys")
+    # Utilisation de az.cmd pour Windows
+    cmd = f"az.cmd vm create --name {vm_name} --resource-group {resource_group} --image {image} --size {size} {ssh}"
+    print(f"\nExécution de : {cmd}\n")
+    exit_code = os.system(cmd)
+    if exit_code != 0:
+        print("Erreur lors de la création de la VM.")
+def modifier_vm():
+    print("\n=== Modification d'une machine virtuelle existante ===")
+    resource_group = input("Nom du groupe de ressources : ")
+    vm_name = input("Nom de la VM : ")
+
+    print("\nChoisissez l'action à réaliser :")
+    print("1. Modifier la taille")
+    print("2. Redémarrer la VM")
+    print("3. Arrêter la VM")
+    choix = input("Votre choix (1/2/3) : ")
+
+    if choix == "1":
+        new_size = input("Nouvelle taille (ex. Standard_DS2_v2) : ")
+        cmd = f"az.cmd vm resize --name {vm_name} --resource-group {resource_group} --size {new_size}"
+    elif choix == "2":
+        cmd = f"az.cmd vm restart --name {vm_name} --resource-group {resource_group}"
+    elif choix == "3":
+        cmd = f"az.cmd vm stop --name {vm_name} --resource-group {resource_group}"
+    else:
+        print("Choix invalide.")
+        return
+
+    print(f"\nExécution de : {cmd}\n")
+    exit_code = os.system(cmd)
+    if exit_code != 0:
+        print("Erreur lors de l'exécution de la commande de modification.")
+def supprimer_vm():
+    print("\n=== Suppression d'une machine virtuelle ===")
+    resource_group = input("Nom du groupe de ressources : ")
+    vm_name = input("Nom de la VM à supprimer : ")
+    confirmation = input("Êtes-vous sûr de vouloir supprimer définitivement cette VM ? (oui/non) : ")
+
+    if confirmation.lower() in ["oui", "o", "yes", "y"]:
+        cmd = f"az.cmd vm delete --name {vm_name} --resource-group {resource_group} --yes"
+        print(f"\nExécution de : {cmd}\n")
+        exit_code = os.system(cmd)
+        if exit_code != 0:
+            print("Erreur lors de la suppression de la VM.")
+    else:
+        print("Suppression annulée.")
+def lister_vm():
+    print("\n=== Liste de toutes les machines virtuelles existantes ===\n")
+    # Utilisation de az.cmd pour afficher la liste des VMs au format table
+    cmd = "az.cmd vm list -o table"
+    exit_code = os.system(cmd)
+    if exit_code != 0:
+        print("Erreur lors de la récupération de la liste des VMs.")
+def main():
+    typewriter(Fore.LIGHTMAGENTA_EX + '''  
+                                __      ____  __ 
+     /\                         \ \    / /  \/  |
+    /  \    _____   _ _ __ ___   \ \  / /| \  / |
+   / /\ \  |_  / | | | '__/ _ \   \ \/ / | |\/| |
+  / ____ \  / /| |_| | | |  __/    \  /  | |  | |
+ /_/  __\_\/___|\__,_|_|  \___|     \/   |_|  |_|
+ |  \/  |                                        
+ | \  / | __ _ _ __   __ _  __ _  ___ _ __       
+ | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|      
+ | |  | | (_| | | | | (_| | (_| |  __/ |         
+ |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|         
+                            __/ |                
+                           |___/                 ''', delay=0.001)
+    while True:
+        typewriter(Fore.YELLOW + "\n------ Menu Principal ------", delay=0.001)
+        typewriter("1. Créer une nouvelle machine virtuelle", delay=0.001)
+        typewriter("2. Agir sur une machine virtuelle existante", delay=0.001)
+        typewriter("3. Supprimer une machine virtuelle", delay=0.001)
+        typewriter("4. Lister toutes les machines virtuelles existantes", delay=0.001)
+        typewriter("5. Quitter", delay=0.001)
+        choix = input("Entrez votre choix (1-5) : ")
+
+        if choix == "1":
+            creer_vm()
+        elif choix == "2":
+            modifier_vm()
+        elif choix == "3":
+            supprimer_vm()
+        elif choix == "4":
+            lister_vm()
+        elif choix == "5":
+            print("Au revoir !")
+            break
+        else:
+            print("Choix invalide. Veuillez réessayer.")
+
+
+if __name__ == "__main__":
+    main()
